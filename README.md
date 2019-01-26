@@ -8,6 +8,7 @@
 * Small Alpine based Image
 * MySQL (default), Postgres, SQLite and Bind backend included
 * Automatic MySQL database initialization
+* Automatic PostgreSQL database initialization
 * Latest PowerDNS version (if not pls file an issue)
 * Guardian process enabled
 * Graceful shutdown using pdns_control

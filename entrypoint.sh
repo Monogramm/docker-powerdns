@@ -7,6 +7,12 @@ set -e
 [ "${1:0:2}" != "--" ] && exec "$@"
 
 if $MYSQL_AUTOCONF ; then
+  if [ -z "$BACKEND" ]; then
+      BACKEND=gmysql
+  fi
+
+  sed -r -i "s/^launch=.*/launch=${BACKEND}/g" /etc/pdns/pdns.conf
+
   if [ -z "$MYSQL_PORT" ]; then
       MYSQL_PORT=3306
   fi
@@ -42,10 +48,65 @@ if $MYSQL_AUTOCONF ; then
 
   if [ "$(echo "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \"$MYSQL_DB\";" | $MYSQLCMD)" -le 1 ]; then
     echo Initializing Database
-    cat /etc/pdns/schema.sql | $MYSQLCMD
+    cat /etc/pdns/schema.mysql.sql | $MYSQLCMD
   fi
 
   unset -v MYSQL_PASS
+
+elif $PGSQL_AUTOCONF ; then
+  if [ -z "$BACKEND" ]; then
+      BACKEND=gpgsql
+  fi
+
+  sed -r -i "s/^launch=.*/launch=${BACKEND}/g" /etc/pdns/pdns.conf
+
+  if [ -z "$PGSQL_PORT" ]; then
+      PGSQL_PORT=5432
+  fi
+  # Set PostgreSQL Credentials in pdns.conf
+  sed -r -i "s/^[# ]*gmysql-host=.*/gpgsql-host=${PGSQL_HOST}/g" /etc/pdns/pdns.conf
+  sed -r -i "s/^[# ]*gmysql-port=.*/gpgsql-port=${PGSQL_PORT}/g" /etc/pdns/pdns.conf
+  sed -r -i "s/^[# ]*gmysql-user=.*/gpgsql-user=${PGSQL_USER}/g" /etc/pdns/pdns.conf
+  sed -r -i "s/^[# ]*gmysql-password=.*/gpgsql-password=${PGSQL_PASS}/g" /etc/pdns/pdns.conf
+  sed -r -i "s/^[# ]*gmysql-dbname=.*/gpgsql-dbname=${PGSQL_DB}/g" /etc/pdns/pdns.conf
+
+  # TODO Install a pgsql client in the Dockerfile
+  PGSQLCMD="psql -h ${PGSQL_HOST} -U ${PGSQL_USER} -W ${PGSQL_PASS} -p ${PGSQL_PORT} "
+
+  # wait for Database come ready
+  isDBup () {
+    pg_isready -h ${PGSQL_HOST} -U ${PGSQL_USER} -W ${PGSQL_PASS} -p ${PGSQL_PORT}
+  }
+
+  RETRY=10
+  until [ `isDBup` -eq 0 ] || [ $RETRY -le 0 ] ; do
+    echo "Waiting for database to come up"
+    sleep 5
+    RETRY=$(expr $RETRY - 1)
+  done
+  if [ $RETRY -le 0 ]; then
+    >&2 echo Error: Could not connect to Database on $PGSQL_HOST:$PGSQL_PORT
+    exit 1
+  fi
+
+  # init database if necessary
+  if ! $PGSQLCMD -lqt | cut -d \| -f 1 | grep -qw ${PGSQL_DB}; then
+    echo Initializing Database
+    cat /etc/pdns/schema.pgsql.sql | $PGSQLCMD
+  fi
+
+  unset -v PGSQL_PASS
+
+elif $SQLITE_AUTOCONF ; then
+  if [ -z "$BACKEND" ]; then
+      BACKEND=gsqlite3
+  fi
+
+  sed -r -i "s/^launch=.*/launch=${BACKEND}/g" /etc/pdns/pdns.conf
+
+  # Set SQLite Path in pdns.conf
+  sed -r -i "s/^[# ]*gmysql-dbname=.*/gpgsql-dbname=${SQLITE_DB}/g" /etc/pdns/pdns.conf
+
 fi
 
 # Run pdns server
