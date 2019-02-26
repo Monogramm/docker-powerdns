@@ -6,7 +6,8 @@ set -e
 # treat everything except -- as exec cmd
 [ "${1:0:2}" != "--" ] && exec "$@"
 
-if $MYSQL_AUTOCONF ; then
+if $MYSQL_AUTOCONF =  ; then
+  echo "MySQL auto-configuration..."
   if [ -z "$BACKEND" ]; then
       BACKEND=gmysql
   fi
@@ -54,6 +55,7 @@ if $MYSQL_AUTOCONF ; then
   unset -v MYSQL_PASS
 
 elif $PGSQL_AUTOCONF ; then
+  echo "PostgreSQL auto-configuration..."
   if [ -z "$BACKEND" ]; then
       BACKEND=gpgsql
   fi
@@ -70,12 +72,14 @@ elif $PGSQL_AUTOCONF ; then
   sed -r -i "s/^[# ]*gmysql-password=.*/gpgsql-password=${PGSQL_PASS}/g" /etc/pdns/pdns.conf
   sed -r -i "s/^[# ]*gmysql-dbname=.*/gpgsql-dbname=${PGSQL_DB}/g" /etc/pdns/pdns.conf
 
-  # TODO Install a pgsql client in the Dockerfile
   PGSQLCMD="psql -h ${PGSQL_HOST} -U ${PGSQL_USER} -W ${PGSQL_PASS} -p ${PGSQL_PORT} "
 
   # wait for Database come ready
   isDBup () {
-    pg_isready -h ${PGSQL_HOST} -U ${PGSQL_USER} -W ${PGSQL_PASS} -p ${PGSQL_PORT}
+    $PGSQLCMD -c "select version()" 1>/dev/null
+    echo $?
+    # XXX Install a pgsql client in the Dockerfile?
+    #pg_isready -h ${PGSQL_HOST} -U ${PGSQL_USER} -W ${PGSQL_PASS} -p ${PGSQL_PORT}
   }
 
   RETRY=10
@@ -98,6 +102,7 @@ elif $PGSQL_AUTOCONF ; then
   unset -v PGSQL_PASS
 
 elif $SQLITE_AUTOCONF ; then
+  echo "SQLite auto-configuration..."
   if [ -z "$BACKEND" ]; then
       BACKEND=gsqlite3
   fi

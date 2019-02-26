@@ -5,7 +5,7 @@ LABEL maintainer="Christoph Wiechert <wio@psitrax.de>"
 
 ENV REFRESHED_AT="2018-11-09" \
     POWERDNS_VERSION=4.1.5 \
-    BACKEND=gmysql \
+    BACKEND='' \
     # MYSQL variables
     MYSQL_AUTOCONF=true \
     MYSQL_HOST="mysql" \
