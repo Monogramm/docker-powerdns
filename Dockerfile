@@ -26,7 +26,7 @@ ENV REFRESHED_AT="2018-11-09" \
 
 # alpine:3.8: mariadb-connector-c-dev
 
-RUN apk --update add libpq sqlite-libs libstdc++ libgcc mariadb-client mariadb-client-libs && \
+RUN apk --update add libpq sqlite-libs libstdc++ libgcc mariadb-client mariadb-client-libs postgresql-client && \
     apk add --virtual build-deps \
       g++ make mariadb-dev postgresql-dev sqlite-dev curl boost-dev && \
     curl -sSL https://downloads.powerdns.com/releases/pdns-$POWERDNS_VERSION.tar.bz2 | tar xj -C /tmp && \

@@ -76,10 +76,10 @@ elif $PGSQL_AUTOCONF ; then
 
   # wait for Database come ready
   isDBup () {
-    $PGSQLCMD -c "select version()" 1>/dev/null
-    echo $?
+    #$PGSQLCMD -c "select version()" 1>/dev/null
+    #echo $?
     # XXX Install a pgsql client in the Dockerfile?
-    #pg_isready -h ${PGSQL_HOST} -U ${PGSQL_USER} -W ${PGSQL_PASS} -p ${PGSQL_PORT}
+    pg_isready -h ${PGSQL_HOST} -U ${PGSQL_USER} -W ${PGSQL_PASS} -p ${PGSQL_PORT}
   }
 
   RETRY=10
