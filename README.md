@@ -1,5 +1,6 @@
 # PowerDNS Docker Container
 
+[![Build Status](https://travis-ci.org/psitrax/powerdns.svg)](https://travis-ci.org/psitrax/powerdns)
 [![Image Size](https://images.microbadger.com/badges/image/psitrax/powerdns.svg)](https://microbadger.com/images/psitrax/powerdns)
 [![Docker Stars](https://img.shields.io/docker/stars/psitrax/powerdns.svg)](https://hub.docker.com/r/psitrax/powerdns/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/psitrax/powerdns.svg)](https://hub.docker.com/r/psitrax/powerdns/)
@@ -40,17 +41,68 @@ $ docker run --name pdns \
     --allow-axfr-ips=127.0.0.1,123.1.2.3
 ```
 
+With docker-compose:
+```yml
+  powerdnsdb:
+    image: mariadb:10.1
+    container_name: powerdnsdb
+    restart: always
+    ports:
+      - "23342:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=rootsupersecret
+      - MYSQL_DATABASE=powerdnsdb
+      - MYSQL_USER=powerdns
+      - MYSQL_PASSWORD=supersecret
+    volumes:
+      - /srv/powerdns/db/data:/var/lib/mysql
+
+  powerdns:
+    image: psitrax/powerdns
+    container_name: powerdns
+    restart: always
+    ports:
+      - 53/tcp:53/tcp
+      - 53/udp:53/udp
+    environment:
+      - MYSQL_HOST=powerdnsdb
+      - MYSQL_PORT=3306
+      - MYSQL_DB=powerdnsdb
+      - MYSQL_USER=powerdns
+      - MYSQL_PASS=supersecret
+```
+
+Then, just run your containers:
+```shell
+$ docker-compose up -d
+```
+
 ## Configuration
 
 **Environment Configuration:**
 
 * MySQL connection settings
   * `MYSQL_HOST=mysql`
+  * `MYSQL_PORT=3306`
   * `MYSQL_USER=root`
   * `MYSQL_PASS=root`
   * `MYSQL_DB=pdns`
 * Want to disable mysql initialization? Use `MYSQL_AUTOCONF=false`
 * Want to use own config files? Mount a Volume to `/etc/pdns/conf.d` or simply overwrite `/etc/pdns/pdns.conf`
+
+* PostgreSQL connection settings
+  * `MYSQL_AUTOCONF=false`
+  * `PGSQL_AUTOCONF=true`
+  * `PGSQL_HOST=postgresql`
+  * `PGSQL_PORT=5532`
+  * `PGSQL_USER=pdns`
+  * `PGSQL_PASS=pdnspassword`
+  * `PGSQL_DB=pdns`
+
+* SQLite connection settings
+  * `MYSQL_AUTOCONF=false`
+  * `SQLITE_AUTOCONF=true`
+  * `SQLITE_DB=pdns`
 
 **PowerDNS Configuration:**
 
