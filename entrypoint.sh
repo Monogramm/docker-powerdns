@@ -79,7 +79,7 @@ elif $PGSQL_AUTOCONF ; then
     #$PGSQLCMD -c "select version()" 1>/dev/null
     #echo $?
     # XXX Install a pgsql client in the Dockerfile?
-    pg_isready -h ${PGSQL_HOST} -U ${PGSQL_USER} -W ${PGSQL_PASS} -p ${PGSQL_PORT}
+    pg_isready -d postgres://${PGSQL_HOST}:${PGSQL_PORT}/${PGSQL_DB}
   }
 
   RETRY=10
