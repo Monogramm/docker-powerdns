@@ -19,7 +19,7 @@ before_script:
 script:
   - travis_retry docker build -t "$image" "$dir"
   - docker images
-  - docker run --name "$name" -d "$image" "$dir" -e MYSQL_AUTOCONF=false -e BACKEND=bind
+  - docker run --name "$name" -d "$image" "$dir" -e BACKEND=$BACKEND -e MYSQL_AUTOCONF=$MYSQL_AUTOCONF -e PGSQL_AUTOCONF=$PGSQL_AUTOCONF -e SQLITE_AUTOCONF=$SQLITE_AUTOCONF
   - docker ps | grep "$name"
   - docker logs "$name"
 
@@ -27,3 +27,5 @@ notifications:
   email: false
 
 env: # Environments
+    - BACKEND=bind MYSQL_AUTOCONF=false PGSQL_AUTOCONF=false SQLITE_AUTOCONF=false
+    - BACKEND=sqlite MYSQL_AUTOCONF=false PGSQL_AUTOCONF=false SQLITE_AUTOCONF=true
