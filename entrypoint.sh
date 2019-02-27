@@ -72,14 +72,15 @@ elif $PGSQL_AUTOCONF ; then
   sed -r -i "s/^[# ]*gmysql-password=.*/gpgsql-password=${PGSQL_PASS}/g" /etc/pdns/pdns.conf
   sed -r -i "s/^[# ]*gmysql-dbname=.*/gpgsql-dbname=${PGSQL_DB}/g" /etc/pdns/pdns.conf
 
-  PGSQLCMD="psql -h ${PGSQL_HOST} -U ${PGSQL_USER} -W ${PGSQL_PASS} -p ${PGSQL_PORT} "
+  PGSQLCMD="psql -h ${PGSQL_HOST} -U ${PGSQL_USER} -p ${PGSQL_PORT} -d ${PGSQL_DB} -w "
 
   # wait for Database come ready
   isDBup () {
-    #$PGSQLCMD -c "select version()" 1>/dev/null
+    pg_isready -d postgres://${PGSQL_HOST}:${PGSQL_PORT}/${PGSQL_DB} 1>/dev/null
+    echo $?
+    # Alternative way to check DB is up
+    #PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -c "select version()" 1>/dev/null
     #echo $?
-    # XXX Install a pgsql client in the Dockerfile?
-    pg_isready -d postgres://${PGSQL_HOST}:${PGSQL_PORT}/${PGSQL_DB}
   }
 
   RETRY=10
@@ -89,14 +90,14 @@ elif $PGSQL_AUTOCONF ; then
     RETRY=$(expr $RETRY - 1)
   done
   if [ $RETRY -le 0 ]; then
-    >&2 echo Error: Could not connect to Database on $PGSQL_HOST:$PGSQL_PORT
+    >&2 echo Error: Could not connect to Database ${PGSQL_DB} on $PGSQL_HOST:$PGSQL_PORT
     exit 1
   fi
 
   # init database if necessary
-  if ! $PGSQLCMD -lqt | cut -d \| -f 1 | grep -qw ${PGSQL_DB}; then
+  if ! PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -t -c "\d" | grep -qw "domains"; then
     echo Initializing Database
-    cat /etc/pdns/schema.pgsql.sql | $PGSQLCMD
+    PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f /etc/pdns/schema.pgsql.sql
   fi
 
   unset -v PGSQL_PASS
