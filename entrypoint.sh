@@ -6,7 +6,7 @@ set -e
 # treat everything except -- as exec cmd
 [ "${1:0:2}" != "--" ] && exec "$@"
 
-if $MYSQL_AUTOCONF =  ; then
+if $MYSQL_AUTOCONF ; then
   echo "MySQL auto-configuration..."
   if [ -z "$BACKEND" ]; then
       BACKEND=gmysql
