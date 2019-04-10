@@ -1,6 +1,6 @@
 # Stick to libressl 2.6
 # https://github.com/PowerDNS/pdns/issues/6943
-FROM alpine:3.7
+FROM alpine:3.9
 LABEL maintainer="Christoph Wiechert <wio@psitrax.de>"
 
 ENV REFRESHED_AT="2019-03-18" \
