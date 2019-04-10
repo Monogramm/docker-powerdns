@@ -3,24 +3,20 @@
 FROM alpine:3.7
 LABEL maintainer="Christoph Wiechert <wio@psitrax.de>"
 
-ENV REFRESHED_AT="2018-11-09" \
-    POWERDNS_VERSION=4.1.5 \
-    BACKEND='' \
-    # MYSQL variables
+ENV REFRESHED_AT="2019-03-18" \
+    POWERDNS_VERSION=4.1.7 \
     MYSQL_AUTOCONF=true \
     MYSQL_HOST="mysql" \
     MYSQL_PORT="3306" \
     MYSQL_USER="root" \
     MYSQL_PASS="root" \
     MYSQL_DB="pdns" \
-    # PGSQL variables
     PGSQL_AUTOCONF=false \
     PGSQL_HOST="pgsql" \
     PGSQL_PORT="5432" \
     PGSQL_USER="postgres" \
     PGSQL_PASS="postgres" \
     PGSQL_DB="pdns" \
-    # SQLite variables
     SQLITE_AUTOCONF=false \
     SQLITE_DB="pdns"
 
