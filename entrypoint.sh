@@ -14,7 +14,8 @@ set -e
 # Set credentials to be imported into pdns.conf
 case "$AUTOCONF" in
   mysql)
-    export PDNS_LOAD_MODULES=libgmysqlbackend.so,$PDNS_LOAD_MODULES
+    echo 'setting up mysql properties...'
+    #export PDNS_LOAD_MODULES=libgmysqlbackend.so,$PDNS_LOAD_MODULES
     export PDNS_LAUNCH=gmysql
     export PDNS_GMYSQL_HOST=${PDNS_GMYSQL_HOST:-$MYSQL_HOST}
     export PDNS_GMYSQL_PORT=${PDNS_GMYSQL_PORT:-$MYSQL_PORT}
@@ -24,7 +25,8 @@ case "$AUTOCONF" in
     export PDNS_GMYSQL_DNSSEC=${PDNS_GMYSQL_DNSSEC:-$MYSQL_DNSSEC}
   ;;
   postgres)
-    export PDNS_LOAD_MODULES=libgpgsqlbackend.so,$PDNS_LOAD_MODULES
+    echo 'setting up postgres properties...'
+    #export PDNS_LOAD_MODULES=libgpgsqlbackend.so,$PDNS_LOAD_MODULES
     export PDNS_LAUNCH=gpgsql
     export PDNS_GPGSQL_HOST=${PDNS_GPGSQL_HOST:-$PGSQL_HOST}
     export PDNS_GPGSQL_PORT=${PDNS_GPGSQL_PORT:-$PGSQL_PORT}
@@ -35,7 +37,8 @@ case "$AUTOCONF" in
     export PGPASSWORD=$PDNS_GPGSQL_PASSWORD
   ;;
   sqlite)
-    export PDNS_LOAD_MODULES=libgsqlite3backend.so,$PDNS_LOAD_MODULES
+    echo 'setting up sqlite properties...'
+    #export PDNS_LOAD_MODULES=libgsqlite3backend.so,$PDNS_LOAD_MODULES
     export PDNS_LAUNCH=gsqlite3
     export PDNS_GSQLITE3_DATABASE=${PDNS_GSQLITE3_DATABASE:-$SQLITE_DB}
     export PDNS_GSQLITE3_PRAGMA_SYNCHRONOUS=${PDNS_GSQLITE3_PRAGMA_SYNCHRONOUS:-$SQLITE_PRAGMA_SYNCHRONOUS}
@@ -93,7 +96,7 @@ case "$PDNS_LAUNCH" in
     echo "CREATE DATABASE IF NOT EXISTS $MYSQL_DB;" | $MYSQLCMD
     MYSQLCMD="$MYSQLCMD $MYSQL_DB"
     if [ "$(echo "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \"$MYSQL_DB\";" | $MYSQLCMD)" -le 1 ]; then
-      echo Initializing Database
+      echo Initializing MySQL Database
       $MYSQLCMD < /etc/pdns/schema.mysql.sql
     fi
   ;;
@@ -103,7 +106,7 @@ case "$PDNS_LAUNCH" in
     #fi
     PGSQLCMD="$PGSQLCMD -p ${PGSQL_PORT} -d ${PGSQL_DB} -w "
     if ! PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -t -c "\d" | grep -qw "domains"; then
-      echo Initializing Database
+      echo Initializing Postgres Database
       PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f /etc/pdns/schema.pgsql.sql
     fi
     # Yet another way to init DB
@@ -116,14 +119,17 @@ case "$PDNS_LAUNCH" in
   gsqlite3)
     if [[ ! -f "$PDNS_GSQLITE3_DATABASE" ]]; then
       install -D -d -o pdns -g pdns -m 0755 $(dirname $PDNS_GSQLITE3_DATABASE)
+      echo Initializing SQLite Database
       sqlite3 $PDNS_GSQLITE3_DATABASE < /etc/pdns/schema.sqlite3.sql
       chown pdns:pdns $PDNS_GSQLITE3_DATABASE
     fi
   ;;
 esac
 
+# Split modules to load dynamically
+#PDNS_LOAD_MODULES="$(echo $PDNS_LOAD_MODULES | sed 's/^,//')"
+
 # convert all environment variables prefixed with PDNS_ into pdns config directives
-PDNS_LOAD_MODULES="$(echo $PDNS_LOAD_MODULES | sed 's/^,//')"
 printenv | grep ^PDNS_ | cut -f2- -d_ | while read var; do
   val="${var#*=}"
   var="${var%%=*}"
