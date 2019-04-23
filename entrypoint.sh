@@ -6,118 +6,138 @@ set -e
 # treat everything except -- as exec cmd
 [ "${1:0:2}" != "--" ] && exec "$@"
 
-if $MYSQL_AUTOCONF ; then
-  echo "MySQL auto-configuration..."
-  if [ -z "$BACKEND" ]; then
-      BACKEND=gmysql
-  fi
+# Add backward compatibility
+[[ "$MYSQL_AUTOCONF" == false ]] && AUTOCONF=false
 
-  sed -r -i "s/^launch=.*/launch=${BACKEND}/g" /etc/pdns/pdns.conf
+# Set credentials to be imported into pdns.conf
+case "$AUTOCONF" in
+  mysql)
+    export PDNS_LOAD_MODULES=libgmysqlbackend.so,$PDNS_LOAD_MODULES
+    export PDNS_LAUNCH=gmysql
+    export PDNS_GMYSQL_HOST=${PDNS_GMYSQL_HOST:-$MYSQL_HOST}
+    export PDNS_GMYSQL_PORT=${PDNS_GMYSQL_PORT:-$MYSQL_PORT}
+    export PDNS_GMYSQL_USER=${PDNS_GMYSQL_USER:-$MYSQL_USER}
+    export PDNS_GMYSQL_PASSWORD=${PDNS_GMYSQL_PASSWORD:-$MYSQL_PASS}
+    export PDNS_GMYSQL_DBNAME=${PDNS_GMYSQL_DBNAME:-$MYSQL_DB}
+    export PDNS_GMYSQL_DNSSEC=${PDNS_GMYSQL_DNSSEC:-$MYSQL_DNSSEC}
+  ;;
+  postgres)
+    export PDNS_LOAD_MODULES=libgpgsqlbackend.so,$PDNS_LOAD_MODULES
+    export PDNS_LAUNCH=gpgsql
+    export PDNS_GPGSQL_HOST=${PDNS_GPGSQL_HOST:-$PGSQL_HOST}
+    export PDNS_GPGSQL_PORT=${PDNS_GPGSQL_PORT:-$PGSQL_PORT}
+    export PDNS_GPGSQL_USER=${PDNS_GPGSQL_USER:-$PGSQL_USER}
+    export PDNS_GPGSQL_PASSWORD=${PDNS_GPGSQL_PASSWORD:-$PGSQL_PASS}
+    export PDNS_GPGSQL_DBNAME=${PDNS_GPGSQL_DBNAME:-$PGSQL_DB}
+    export PDNS_GPGSQL_DNSSEC=${PDNS_GPGSQL_DNSSEC:-$PGSQL_DNSSEC}
+    export PGPASSWORD=$PDNS_GPGSQL_PASSWORD
+  ;;
+  sqlite)
+    export PDNS_LOAD_MODULES=libgsqlite3backend.so,$PDNS_LOAD_MODULES
+    export PDNS_LAUNCH=gsqlite3
+    export PDNS_GSQLITE3_DATABASE=${PDNS_GSQLITE3_DATABASE:-$SQLITE_DB}
+    export PDNS_GSQLITE3_PRAGMA_SYNCHRONOUS=${PDNS_GSQLITE3_PRAGMA_SYNCHRONOUS:-$SQLITE_PRAGMA_SYNCHRONOUS}
+    export PDNS_GSQLITE3_PRAGMA_FOREIGN_KEYS=${PDNS_GSQLITE3_PRAGMA_FOREIGN_KEYS:-$SQLITE_PRAGMA_FOREIGN_KEYS}
+    export PDNS_GSQLITE3_DNSSEC=${PDNS_GSQLITE3_DNSSEC:-$SQLITE_DNSSEC}
+  ;;
+esac
 
-  if [ -z "$MYSQL_PORT" ]; then
-      MYSQL_PORT=3306
-  fi
-  # Set MySQL Credentials in pdns.conf
-  sed -r -i "s/^[# ]*gmysql-host=.*/gmysql-host=${MYSQL_HOST}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-port=.*/gmysql-port=${MYSQL_PORT}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-user=.*/gmysql-user=${MYSQL_USER}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-password=.*/gmysql-password=${MYSQL_PASS}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-dbname=.*/gmysql-dbname=${MYSQL_DB}/g" /etc/pdns/pdns.conf
+MYSQLCMD="mysql --host=${MYSQL_HOST} --user=${MYSQL_USER} --password=${MYSQL_PASS} --port=${MYSQL_PORT} -r -N"
+PGSQLCMD="psql --host=${PGSQL_HOST} --username=${PGSQL_USER}"
 
-  MYSQLCMD="mysql --host=${MYSQL_HOST} --user=${MYSQL_USER} --password=${MYSQL_PASS} --port=${MYSQL_PORT} -r -N"
+# wait for Database come ready
+isDBup () {
+  case "$PDNS_LAUNCH" in
+    gmysql)
+      echo "SHOW STATUS" | $MYSQLCMD 1>/dev/null
+      echo $?
+    ;;
+    gpgsql)
+      echo "SELECT 1" | $PGSQLCMD 1>/dev/null
+      echo $?
+      # Alternative way to check DB is up
+      #PGSQLCMD="$PGSQLCMD -p ${PGSQL_PORT} -d ${PGSQL_DB} -w "
+      #PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -c "select version()" 1>/dev/null
+      #echo $?
+      # Yet another way to check DB is up
+      #pg_isready -d postgres://${PGSQL_HOST}:${PGSQL_PORT}/${PGSQL_DB} 1>/dev/null
+      #echo $?
+    ;;
+    *)
+      echo 0
+    ;;
+  esac
+}
 
-  # wait for Database come ready
-  isDBup () {
-    echo "SHOW STATUS" | $MYSQLCMD 1>/dev/null
-    echo $?
-  }
-
-  RETRY=10
-  until [ `isDBup` -eq 0 ] || [ $RETRY -le 0 ] ; do
-    echo "Waiting for database to come up"
-    sleep 5
-    RETRY=$(expr $RETRY - 1)
-  done
-  if [ $RETRY -le 0 ]; then
+RETRY=10
+until [ $(isDBup) -eq 0 ] || [ $RETRY -le 0 ] ; do
+  echo "Waiting for database to come up"
+  sleep 5
+  RETRY=$(expr $RETRY - 1)
+done
+if [ $RETRY -le 0 ]; then
+  if [[ "$MYSQL_HOST" ]]; then
     >&2 echo Error: Could not connect to Database on $MYSQL_HOST:$MYSQL_PORT
     exit 1
-  fi
-
-  # init database if necessary
-  echo "CREATE DATABASE IF NOT EXISTS $MYSQL_DB;" | $MYSQLCMD
-  MYSQLCMD="$MYSQLCMD $MYSQL_DB"
-
-  if [ "$(echo "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \"$MYSQL_DB\";" | $MYSQLCMD)" -le 1 ]; then
-    echo Initializing Database
-    cat /etc/pdns/schema.mysql.sql | $MYSQLCMD
-  fi
-
-  unset -v MYSQL_PASS
-
-elif $PGSQL_AUTOCONF ; then
-  echo "PostgreSQL auto-configuration..."
-  if [ -z "$BACKEND" ]; then
-      BACKEND=gpgsql
-  fi
-
-  sed -r -i "s/^launch=.*/launch=${BACKEND}/g" /etc/pdns/pdns.conf
-
-  if [ -z "$PGSQL_PORT" ]; then
-      PGSQL_PORT=5432
-  fi
-  # Set PostgreSQL Credentials in pdns.conf
-  sed -r -i "s/^[# ]*gmysql-host=.*/gpgsql-host=${PGSQL_HOST}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-port=.*/gpgsql-port=${PGSQL_PORT}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-user=.*/gpgsql-user=${PGSQL_USER}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-password=.*/gpgsql-password=${PGSQL_PASS}/g" /etc/pdns/pdns.conf
-  sed -r -i "s/^[# ]*gmysql-dbname=.*/gpgsql-dbname=${PGSQL_DB}/g" /etc/pdns/pdns.conf
-
-  PGSQLCMD="psql -h ${PGSQL_HOST} -U ${PGSQL_USER} -p ${PGSQL_PORT} -d ${PGSQL_DB} -w "
-
-  # wait for Database come ready
-  isDBup () {
-    pg_isready -d postgres://${PGSQL_HOST}:${PGSQL_PORT}/${PGSQL_DB} 1>/dev/null
-    echo $?
-    # Alternative way to check DB is up
-    #PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -c "select version()" 1>/dev/null
-    #echo $?
-  }
-
-  RETRY=10
-  until [ `isDBup` -eq 0 ] || [ $RETRY -le 0 ] ; do
-    echo "Waiting for database to come up"
-    sleep 5
-    RETRY=$(expr $RETRY - 1)
-  done
-  if [ $RETRY -le 0 ]; then
-    >&2 echo Error: Could not connect to Database ${PGSQL_DB} on $PGSQL_HOST:$PGSQL_PORT
+  elif [[ "$PGSQL_HOST" ]]; then
+    >&2 echo Error: Could not connect to Database on $PGSQL_HOST:$PGSQL_PORT
     exit 1
   fi
-
-  # init database if necessary
-  if ! PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -t -c "\d" | grep -qw "domains"; then
-    echo Initializing Database
-    PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f /etc/pdns/schema.pgsql.sql
-  fi
-
-  unset -v PGSQL_PASS
-
-elif $SQLITE_AUTOCONF ; then
-  echo "SQLite auto-configuration..."
-  if [ -z "$BACKEND" ]; then
-      BACKEND=gsqlite3
-  fi
-
-  sed -r -i "s/^launch=.*/launch=${BACKEND}/g" /etc/pdns/pdns.conf
-
-  # Set SQLite Path in pdns.conf
-  sed -r -i "s/^[# ]*gmysql-dbname=.*/gpgsql-dbname=${SQLITE_DB}/g" /etc/pdns/pdns.conf
-
 fi
 
-# Run pdns server
+# init database and migrate database if necessary
+case "$PDNS_LAUNCH" in
+  gmysql)
+    echo "CREATE DATABASE IF NOT EXISTS $MYSQL_DB;" | $MYSQLCMD
+    MYSQLCMD="$MYSQLCMD $MYSQL_DB"
+    if [ "$(echo "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \"$MYSQL_DB\";" | $MYSQLCMD)" -le 1 ]; then
+      echo Initializing Database
+      $MYSQLCMD < /etc/pdns/schema.mysql.sql
+    fi
+  ;;
+  gpgsql)
+    if [[ -z "$(echo "SELECT 1 FROM pg_database WHERE datname = '$PGSQL_DB'" | $PGSQLCMD -t)" ]]; then
+      echo "CREATE DATABASE $PGSQL_DB;" | $PGSQLCMD
+    fi
+    PGSQLCMD="$PGSQLCMD -p ${PGSQL_PORT} -d ${PGSQL_DB} -w "
+    if ! PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -t -c "\d" | grep -qw "domains"; then
+      echo Initializing Database
+      PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f /etc/pdns/schema.pgsql.sql
+    fi
+    # Yet another way to init DB
+    #PGSQLCMD="$PGSQLCMD $PGSQL_DB"
+    #if [[ -z "$(printf '\dt' | $PGSQLCMD -qAt)" ]]; then
+    #  echo Initializing Database
+    #  $PGSQLCMD < /etc/pdns/schema.pgsql.sql
+    #fi
+  ;;
+  gsqlite3)
+    if [[ ! -f "$PDNS_GSQLITE3_DATABASE" ]]; then
+      install -D -d -o pdns -g pdns -m 0755 $(dirname $PDNS_GSQLITE3_DATABASE)
+      sqlite3 $PDNS_GSQLITE3_DATABASE < /etc/pdns/schema.sqlite3.sql
+      chown pdns:pdns $PDNS_GSQLITE3_DATABASE
+    fi
+  ;;
+esac
+
+# convert all environment variables prefixed with PDNS_ into pdns config directives
+PDNS_LOAD_MODULES="$(echo $PDNS_LOAD_MODULES | sed 's/^,//')"
+printenv | grep ^PDNS_ | cut -f2- -d_ | while read var; do
+  val="${var#*=}"
+  var="${var%%=*}"
+  var="$(echo $var | sed -e 's/_/-/g' | tr '[:upper:]' '[:lower:]')"
+  [[ -z "$TRACE" ]] || echo "$var=$val"
+  sed -r -i "s#^[# ]*$var=.*#$var=$val#g" /etc/pdns/pdns.conf
+done
+
+# environment cleanup
+for var in $(printenv | cut -f1 -d= | grep -v -e HOME -e USER -e PATH ); do unset $var; done
+export TZ=UTC LANG=C LC_ALL=C
+
+# prepare graceful shutdown
 trap "pdns_control quit" SIGHUP SIGINT SIGTERM
 
+# run pdns server
 pdns_server "$@" &
 
 wait
