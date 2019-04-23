@@ -1,5 +1,7 @@
 FROM alpine:3.9
-LABEL maintainer="Christoph Wiechert <wio@psitrax.de>"
+
+LABEL maintainer="Christoph Wiechert <wio@psitrax.de>" \
+  CONTRIBUTORS="Mathias Kaufmann <me@stei.gr>"
 
 ENV REFRESHED_AT="2019-04-23" \
   POWERDNS_VERSION=4.1.8 \
@@ -15,8 +17,6 @@ ENV REFRESHED_AT="2019-04-23" \
   PGSQL_PASS="postgres" \
   PGSQL_DB="pdns" \
   SQLITE_DB="pdns.sqlite3"
-
-# alpine:3.8: mariadb-connector-c-dev
 
 RUN set -ex; \
   apk --update --no-cache add \
@@ -45,7 +45,8 @@ RUN set -ex; \
     --prefix="" \
     --exec-prefix=/usr \
     --sysconfdir=/etc/pdns \
-    --with-modules="bind gmysql gpgsql gsqlite3" \
+    --with-modules="" \
+    --with-dynmodules="bind gmysql gpgsql gsqlite3" \
     --without-lua \
   ; \
   make; \

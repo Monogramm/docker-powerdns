@@ -1,5 +1,7 @@
-#!/bin/sh
+#!/bin/bash
 set -e
+
+[[ -z "$TRACE" ]] || set -x
 
 # --help, --version
 [ "$1" = "--help" ] || [ "$1" = "--version" ] && exec pdns_server $1
