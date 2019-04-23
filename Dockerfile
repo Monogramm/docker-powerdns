@@ -23,19 +23,21 @@ RUN set -ex; \
     libpq \
     libstdc++ \
     libgcc \
-    mariadb-client \
-    mariadb-client-libs \
+    mariadb-connector-c-dev \
+    mysql-client \
     postgresql-client \
-    sqlite-libs \
+    sqlite \
   ; \
   apk add --no-cache --virtual .build-deps \
+    binutils \
+    boost-dev \
+    curl \
+    file \
     g++ \
     make \
     mariadb-dev \
     postgresql-dev \
     sqlite-dev \
-    curl \
-    boost-dev \
   ; \
   curl -sSL https://downloads.powerdns.com/releases/pdns-$POWERDNS_VERSION.tar.bz2 | tar xj -C /tmp; \
   cd /tmp/pdns-$POWERDNS_VERSION; \
