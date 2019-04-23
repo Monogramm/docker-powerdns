@@ -20,7 +20,7 @@ script:
   - travis_retry docker build -t "$image" "$dir"
   - docker images
   - docker run --rm --name "cmd_help" -e AUTOCONF=$AUTOCONF "$image" --help
-  - docker run --rm --name "cmd_version" -e AUTOCONF=$AUTOCONF "$image" --version
+  #- docker run --rm --name "cmd_version" -e AUTOCONF=$AUTOCONF "$image" --version
   - docker run --name "$name" -e AUTOCONF=$AUTOCONF -d "$image"
   - docker ps | grep "$name"
   - docker logs "$name"
