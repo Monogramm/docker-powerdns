@@ -55,14 +55,14 @@ isDBup () {
       echo $?
     ;;
     gpgsql)
-      echo "SELECT 1" | $PGSQLCMD 1>/dev/null
+      pg_isready -d postgres://${PGSQL_HOST}:${PGSQL_PORT}/${PGSQL_DB} 1>/dev/null
       echo $?
       # Alternative way to check DB is up
       #PGSQLCMD="$PGSQLCMD -p ${PGSQL_PORT} -d ${PGSQL_DB} -w "
       #PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -c "select version()" 1>/dev/null
       #echo $?
       # Yet another way to check DB is up
-      #pg_isready -d postgres://${PGSQL_HOST}:${PGSQL_PORT}/${PGSQL_DB} 1>/dev/null
+      #echo "SELECT 1" | $PGSQLCMD 1>/dev/null
       #echo $?
     ;;
     *)
@@ -98,9 +98,9 @@ case "$PDNS_LAUNCH" in
     fi
   ;;
   gpgsql)
-    if [[ -z "$(echo "SELECT 1 FROM pg_database WHERE datname = '$PGSQL_DB'" | $PGSQLCMD -t)" ]]; then
-      echo "CREATE DATABASE $PGSQL_DB;" | $PGSQLCMD
-    fi
+    #if [[ -z "$(echo "SELECT 1 FROM pg_database WHERE datname = '$PGSQL_DB'" | $PGSQLCMD -t)" ]]; then
+    #  echo "CREATE DATABASE $PGSQL_DB;" | $PGSQLCMD
+    #fi
     PGSQLCMD="$PGSQLCMD -p ${PGSQL_PORT} -d ${PGSQL_DB} -w "
     if ! PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -t -c "\d" | grep -qw "domains"; then
       echo Initializing Database
