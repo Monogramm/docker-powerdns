@@ -26,7 +26,7 @@ RUN set -ex; \
     mariadb-connector-c-dev \
     mysql-client \
     postgresql-client \
-    sqlite \
+    sqlite-libs \
   ; \
   apk add --virtual .build-deps \
     binutils \
