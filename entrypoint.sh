@@ -14,8 +14,8 @@ set -e
 # Set credentials to be imported into pdns.conf
 case "$AUTOCONF" in
   mysql)
-    echo 'setting up mysql properties...'
-    #export PDNS_LOAD_MODULES=libgmysqlbackend.so,$PDNS_LOAD_MODULES
+    echo 'Setting up mysql properties...'
+    export PDNS_LOAD_MODULES=$PDNS_LOAD_MODULES,libgmysqlbackend.so
     export PDNS_LAUNCH=gmysql
     export PDNS_GMYSQL_HOST=${PDNS_GMYSQL_HOST:-$MYSQL_HOST}
     export PDNS_GMYSQL_PORT=${PDNS_GMYSQL_PORT:-$MYSQL_PORT}
@@ -25,8 +25,8 @@ case "$AUTOCONF" in
     export PDNS_GMYSQL_DNSSEC=${PDNS_GMYSQL_DNSSEC:-$MYSQL_DNSSEC}
   ;;
   postgres)
-    echo 'setting up postgres properties...'
-    #export PDNS_LOAD_MODULES=libgpgsqlbackend.so,$PDNS_LOAD_MODULES
+    echo 'Setting up postgres properties...'
+    export PDNS_LOAD_MODULES=$PDNS_LOAD_MODULES,libgpgsqlbackend.so
     export PDNS_LAUNCH=gpgsql
     export PDNS_GPGSQL_HOST=${PDNS_GPGSQL_HOST:-$PGSQL_HOST}
     export PDNS_GPGSQL_PORT=${PDNS_GPGSQL_PORT:-$PGSQL_PORT}
@@ -37,8 +37,8 @@ case "$AUTOCONF" in
     export PGPASSWORD=$PDNS_GPGSQL_PASSWORD
   ;;
   sqlite)
-    echo 'setting up sqlite properties...'
-    #export PDNS_LOAD_MODULES=libgsqlite3backend.so,$PDNS_LOAD_MODULES
+    echo 'Setting up sqlite properties...'
+    export PDNS_LOAD_MODULES=$PDNS_LOAD_MODULES,libgsqlite3backend.so
     export PDNS_LAUNCH=gsqlite3
     export PDNS_GSQLITE3_DATABASE=${PDNS_GSQLITE3_DATABASE:-$SQLITE_DB}
     export PDNS_GSQLITE3_PRAGMA_SYNCHRONOUS=${PDNS_GSQLITE3_PRAGMA_SYNCHRONOUS:-$SQLITE_PRAGMA_SYNCHRONOUS}
@@ -90,7 +90,7 @@ if [ $RETRY -le 0 ]; then
   fi
 fi
 
-# init database and migrate database if necessary
+echo 'Init database and migrate database if necessary...'
 case "$PDNS_LAUNCH" in
   gmysql)
     echo "CREATE DATABASE IF NOT EXISTS $MYSQL_DB;" | $MYSQLCMD
@@ -126,10 +126,10 @@ case "$PDNS_LAUNCH" in
   ;;
 esac
 
-# Split modules to load dynamically
-#PDNS_LOAD_MODULES="$(echo $PDNS_LOAD_MODULES | sed 's/^,//')"
+echo 'Split modules to load dynamically...'
+PDNS_LOAD_MODULES="$(echo $PDNS_LOAD_MODULES | sed 's/^,//')"
 
-# convert all environment variables prefixed with PDNS_ into pdns config directives
+echo 'Convert all environment variables prefixed with PDNS_ into pdns config directives...'
 printenv | grep ^PDNS_ | cut -f2- -d_ | while read var; do
   val="${var#*=}"
   var="${var%%=*}"
@@ -138,14 +138,14 @@ printenv | grep ^PDNS_ | cut -f2- -d_ | while read var; do
   sed -r -i "s#^[# ]*$var=.*#$var=$val#g" /etc/pdns/pdns.conf
 done
 
-# environment cleanup
+echo 'Environment cleanup...'
 for var in $(printenv | cut -f1 -d= | grep -v -e HOME -e USER -e PATH ); do unset $var; done
 export TZ=UTC LANG=C LC_ALL=C
 
-# prepare graceful shutdown
+echo 'Prepare graceful shutdown...'
 trap "pdns_control quit" SIGHUP SIGINT SIGTERM
 
-# run pdns server
+echo 'Run pdns server...'
 pdns_server "$@" &
 
 wait
