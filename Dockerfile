@@ -45,7 +45,8 @@ RUN set -ex; \
     --prefix="" \
     --exec-prefix=/usr \
     --sysconfdir=/etc/pdns \
-    --with-modules="bind gmysql gpgsql gsqlite3" \
+    --with-modules="" \
+    --with-dynmodules="bind gmysql gpgsql gsqlite3" \
     --without-lua \
   ; \
   make; \
