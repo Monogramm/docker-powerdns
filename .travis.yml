@@ -19,6 +19,7 @@ before_script:
 script:
   - travis_retry docker build -t "$image" "$dir"
   - docker images
+  - docker run --rm --name "$name" -e AUTOCONF=$AUTOCONF -d "$image" "$dir" --help
   - docker run --name "$name" -e AUTOCONF=$AUTOCONF -d "$image" "$dir"
   - docker ps | grep "$name"
   - docker logs "$name"
