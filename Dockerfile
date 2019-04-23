@@ -28,7 +28,7 @@ RUN set -ex; \
     postgresql-client \
     sqlite \
   ; \
-  apk add --no-cache --virtual .build-deps \
+  apk add --virtual .build-deps \
     binutils \
     boost-dev \
     curl \
@@ -55,7 +55,7 @@ RUN set -ex; \
   addgroup -S pdns 2>/dev/null; \
   adduser -S -D -H -h /var/empty -s /bin/false -G pdns -g pdns pdns 2>/dev/null; \
   cp /usr/lib/libboost_program_options-mt.so* /tmp; \
-  apk del --purge build-deps; \
+  apk del --purge .build-deps; \
   mv /tmp/libboost_program_options-mt.so* /usr/lib/; \
   rm -rf /tmp/pdns-$POWERDNS_VERSION /var/cache/apk/*
 
