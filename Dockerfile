@@ -3,8 +3,8 @@ FROM alpine:3.9
 LABEL maintainer="Christoph Wiechert <wio@psitrax.de>" \
   CONTRIBUTORS="Mathias Kaufmann <me@stei.gr>"
 
-ENV REFRESHED_AT="2019-04-23" \
-  POWERDNS_VERSION=4.1.8 \
+ENV REFRESHED_AT="2019-06-25" \
+  POWERDNS_VERSION=4.1.10 \
   AUTOCONF=mysql \
   MYSQL_HOST="mysql" \
   MYSQL_PORT="3306" \
