@@ -24,10 +24,31 @@ script:
   - docker run --name "$name" -e AUTOCONF=$AUTOCONF -d "$image"
   - docker ps | grep "$name"
   - docker logs "$name"
+  - cd "$dir"
+  - mv docker-compose_$AUTOCONF.yml docker-compose.yml
+  - rm -f docker-compose_*.yml
+  - travis_retry travis_wait 60 docker-compose build
+  - docker images
+  - travis_retry docker-compose up -d && sleep 30
+  - docker-compose ps
+  - docker-compose logs
+  - docker-compose ps "$name" | grep "Up"
+  - echo 'Wait until everything ready (1-2 minutes)' && sleep 120
+  - docker-compose ps
+  - docker-compose logs
+  - docker-compose ps "$name" | grep "Up"
+  - docker-compose down
+  - travis_retry docker-compose up -d && sleep 30
+  - echo 'Wait until everything ready (1-2 minutes)' && sleep 120
+  - docker-compose ps
+  - docker-compose logs
+  - docker-compose ps "$name" | grep "Up"
 
 notifications:
   email: false
 
 env: # Environments
-    - AUTOCONF=false
+    #- AUTOCONF=false
     - AUTOCONF=sqlite
+    - AUTOCONF=postgres
+    - AUTOCONF=mysql
