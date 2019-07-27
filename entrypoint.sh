@@ -1,6 +1,10 @@
 #!/bin/sh
 set -e
 
+log() {
+  echo "[$(date +%Y-%m-%dT%H:%M:%S%:z)] $@"
+}
+
 [[ -z "$TRACE" ]] || set -x
 
 # --help, --version
@@ -14,7 +18,7 @@ set -e
 # Set credentials to be imported into pdns.conf
 case "$AUTOCONF" in
   mysql)
-    echo 'Setting up mysql properties...'
+    log 'Setting up mysql properties...'
     export PDNS_LOAD_MODULES=$PDNS_LOAD_MODULES,libgmysqlbackend.so
     export PDNS_LAUNCH=gmysql
     export PDNS_GMYSQL_HOST=${PDNS_GMYSQL_HOST:-$MYSQL_HOST}
@@ -25,7 +29,7 @@ case "$AUTOCONF" in
     export PDNS_GMYSQL_DNSSEC=${PDNS_GMYSQL_DNSSEC:-$MYSQL_DNSSEC}
   ;;
   postgres)
-    echo 'Setting up postgres properties...'
+    log 'Setting up postgres properties...'
     export PDNS_LOAD_MODULES=$PDNS_LOAD_MODULES,libgpgsqlbackend.so
     export PDNS_LAUNCH=gpgsql
     export PDNS_GPGSQL_HOST=${PDNS_GPGSQL_HOST:-$PGSQL_HOST}
@@ -37,7 +41,7 @@ case "$AUTOCONF" in
     export PGPASSWORD=$PDNS_GPGSQL_PASSWORD
   ;;
   sqlite)
-    echo 'Setting up sqlite properties...'
+    log 'Setting up sqlite properties...'
     export PDNS_LOAD_MODULES=$PDNS_LOAD_MODULES,libgsqlite3backend.so
     export PDNS_LAUNCH=gsqlite3
     export PDNS_GSQLITE3_DATABASE=${PDNS_GSQLITE3_DATABASE:-$SQLITE_DB}
@@ -76,7 +80,7 @@ isDBup () {
 
 RETRY=10
 until [ $(isDBup) -eq 0 ] || [ $RETRY -le 0 ] ; do
-  echo "Waiting for database to come up"
+  log "Waiting for database to come up"
   sleep 5
   RETRY=$(expr $RETRY - 1)
 done
@@ -90,13 +94,13 @@ if [ $RETRY -le 0 ]; then
   fi
 fi
 
-echo 'Init database and migrate database if necessary...'
+log 'Init database and migrate database if necessary...'
 case "$PDNS_LAUNCH" in
   gmysql)
     echo "CREATE DATABASE IF NOT EXISTS $MYSQL_DB;" | $MYSQLCMD
     MYSQLCMD="$MYSQLCMD $MYSQL_DB"
     if [ "$(echo "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \"$MYSQL_DB\";" | $MYSQLCMD)" -le 1 ]; then
-      echo Initializing MySQL Database
+      log 'Initializing MySQL Database'
       $MYSQLCMD < /etc/pdns/schema.mysql.sql
     fi
   ;;
@@ -106,7 +110,7 @@ case "$PDNS_LAUNCH" in
     #fi
     PGSQLCMD="$PGSQLCMD -p ${PGSQL_PORT} -d ${PGSQL_DB} -w "
     if ! PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -t -c "\d" | grep -qw "domains"; then
-      echo Initializing Postgres Database
+      log 'Initializing Postgres Database'
       PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f /etc/pdns/schema.pgsql.sql
     fi
     # Yet another way to init DB
@@ -119,17 +123,17 @@ case "$PDNS_LAUNCH" in
   gsqlite3)
     if [[ ! -f "$PDNS_GSQLITE3_DATABASE" ]]; then
       install -D -d -o pdns -g pdns -m 0755 $(dirname $PDNS_GSQLITE3_DATABASE)
-      echo Initializing SQLite Database
+      log 'Initializing SQLite Database'
       sqlite3 $PDNS_GSQLITE3_DATABASE < /etc/pdns/schema.sqlite3.sql
       chown pdns:pdns $PDNS_GSQLITE3_DATABASE
     fi
   ;;
 esac
 
-echo 'Split modules to load dynamically...'
+log 'Split modules to load dynamically...'
 PDNS_LOAD_MODULES="$(echo $PDNS_LOAD_MODULES | sed 's/^,//')"
 
-echo 'Convert all environment variables prefixed with PDNS_ into pdns config directives...'
+log 'Convert all environment variables prefixed with PDNS_ into pdns config directives...'
 printenv | grep ^PDNS_ | cut -f2- -d_ | while read var; do
   val="${var#*=}"
   var="${var%%=*}"
@@ -138,14 +142,14 @@ printenv | grep ^PDNS_ | cut -f2- -d_ | while read var; do
   sed -r -i "s#^[# ]*$var=.*#$var=$val#g" /etc/pdns/pdns.conf
 done
 
-echo 'Environment cleanup...'
+log 'Environment cleanup...'
 for var in $(printenv | cut -f1 -d= | grep -v -e HOME -e USER -e PATH ); do unset $var; done
 export TZ=UTC LANG=C LC_ALL=C
 
-echo 'Prepare graceful shutdown...'
+log 'Prepare graceful shutdown...'
 trap "pdns_control quit" SIGHUP SIGINT SIGTERM
 
-echo 'Run pdns server...'
+log 'Run pdns server...'
 pdns_server "$@" &
 
 wait
