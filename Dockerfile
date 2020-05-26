@@ -3,8 +3,8 @@ FROM alpine:3.9
 LABEL maintainer="Christoph Wiechert <wio@psitrax.de>" \
   CONTRIBUTORS="Mathias Kaufmann <me@stei.gr>"
 
-ENV REFRESHED_AT="2019-06-25" \
-  POWERDNS_VERSION=4.1.10 \
+ENV REFRESHED_AT="2019-10-10" \
+  POWERDNS_VERSION=4.2.0 \
   AUTOCONF=mysql \
   MYSQL_HOST="mysql" \
   MYSQL_PORT="3306" \
@@ -23,8 +23,8 @@ RUN set -ex; \
     libpq \
     libstdc++ \
     libgcc \
-    mariadb-connector-c-dev \
-    mysql-client \
+    mariadb-connector-c \
+    mariadb-client \
     postgresql-client \
     sqlite \
     sqlite-libs \
@@ -36,6 +36,7 @@ RUN set -ex; \
     file \
     g++ \
     make \
+    mariadb-connector-c-dev \
     mariadb-dev \
     postgresql-dev \
     sqlite-dev \

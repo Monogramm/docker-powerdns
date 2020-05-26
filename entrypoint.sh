@@ -1,9 +1,47 @@
-#!/bin/sh
+#!/bin/bash
 set -e
 
 log() {
   echo "[$(date +%Y-%m-%dT%H:%M:%S%:z)] $@"
 }
+
+# usage: file_env VAR [DEFAULT]
+#    ie: file_env 'XYZ_DB_PASSWORD' 'example'
+# (will allow for "$XYZ_DB_PASSWORD_FILE" to fill in the value of
+#  "$XYZ_DB_PASSWORD" from a file, especially for Docker's secrets feature)
+# source: https://github.com/docker-library/mariadb/blob/master/docker-entrypoint.sh
+file_env() {
+    local var="$1"
+    local fileVar="${var}_FILE"
+    local def="${2:-}"
+    if [ "${!var:-}" ] && [ "${!fileVar:-}" ]; then
+        echo "Both $var and $fileVar are set (but are exclusive)"
+        exit 1
+    fi
+    local val="$def"
+    if [ "${!var:-}" ]; then
+        val="${!var}"
+    elif [ "${!fileVar:-}" ]; then
+        val="$(< "${!fileVar}")"
+    fi
+    export "$var"="$val"
+    unset "$fileVar"
+}
+
+# Loads various settings that are used elsewhere in the script
+docker_setup_env() {
+    # Initialize values that might be stored in a file
+
+    file_env 'MYSQL_AUTOCONF' $MYSQL_DEFAULT_AUTOCONF
+    file_env 'MYSQL_HOST' $MYSQL_DEFAULT_HOST
+    file_env 'MYSQL_DNSSEC' 'no'
+    file_env 'MYSQL_DB' $MYSQL_DEFAULT_DB
+    file_env 'MYSQL_PASS' $MYSQL_DEFAULT_PASS
+    file_env 'MYSQL_USER' $MYSQL_DEFAULT_USER
+    file_env 'MYSQL_PORT' $MYSQL_DEFAULT_PORT
+}
+
+docker_setup_env
 
 [[ -z "$TRACE" ]] || set -x
 
@@ -101,7 +139,15 @@ case "$PDNS_LAUNCH" in
     MYSQLCMD="$MYSQLCMD $MYSQL_DB"
     if [ "$(echo "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \"$MYSQL_DB\";" | $MYSQLCMD)" -le 1 ]; then
       log 'Initializing MySQL Database'
-      $MYSQLCMD < /etc/pdns/schema.mysql.sql
+      cat /etc/pdns/schema.mysql.sql | $MYSQLCMD
+
+      # Run custom mysql post-init sql scripts
+      if [ -d "/etc/pdns/mysql-postinit" ]; then
+        for SQLFILE in $(ls -1 /etc/pdns/mysql-postinit/*.sql | sort) ; do
+          echo Source $SQLFILE
+          cat $SQLFILE | $MYSQLCMD
+        done
+      fi
     fi
   ;;
   gpgsql)
@@ -112,6 +158,14 @@ case "$PDNS_LAUNCH" in
     if ! PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -t -c "\d" | grep -qw "domains"; then
       log 'Initializing Postgres Database'
       PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f /etc/pdns/schema.pgsql.sql
+
+      # Run custom pgsql post-init sql scripts
+      if [ -d "/etc/pdns/pgsql-postinit" ]; then
+        for SQLFILE in $(ls -1 /etc/pdns/pgsql-postinit/*.sql | sort) ; do
+          echo Source $SQLFILE
+          PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f $SQLFILE
+        done
+      fi
     fi
     # Yet another way to init DB
     #PGSQLCMD="$PGSQLCMD $PGSQL_DB"
@@ -126,6 +180,14 @@ case "$PDNS_LAUNCH" in
       log 'Initializing SQLite Database'
       sqlite3 $PDNS_GSQLITE3_DATABASE < /etc/pdns/schema.sqlite3.sql
       chown pdns:pdns $PDNS_GSQLITE3_DATABASE
+
+      # Run custom pgsql post-init sql scripts
+      if [ -d "/etc/pdns/sqlite3-postinit" ]; then
+        for SQLFILE in $(ls -1 /etc/pdns/sqlite3-postinit/*.sql | sort) ; do
+          echo Source $SQLFILE
+          sqlite3 $PDNS_GSQLITE3_DATABASE < $SQLFILE
+        done
+      fi
     fi
   ;;
 esac
