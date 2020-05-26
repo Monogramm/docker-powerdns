@@ -9,7 +9,7 @@
 * Small Alpine based Image
 * MySQL (default), Postgres, SQLite and Bind backend included
 * DNSSEC support optional
-* Automatic database initialization for MySQL, Postgres or SQLite
+* Automatic database initialization for MySQL, Postgres and SQLite
 * Latest PowerDNS version (if not pls file an issue)
 * Guardian process enabled
 * Graceful shutdown using pdns_control
@@ -17,7 +17,7 @@
 ## Supported tags
 
 * Exact: i.e. `4.3.0`: PowerDNS Version 4.3.0
-* `4.0`: PowerDNS Version 4.0.x, latest image build
+* `4.3`: PowerDNS Version 4.3.x, latest image build
 * `4`: PowerDNS Version 4.x.x, latest image build
 
 ## Usage
