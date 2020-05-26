@@ -1,28 +1,30 @@
 FROM alpine:3.9
 
-LABEL maintainer="Christoph Wiechert <wio@psitrax.de>" \
-  CONTRIBUTORS="Mathias Kaufmann <me@stei.gr>"
+LABEL MAINTAINER="Christoph Wiechert <wio@psitrax.de>" \
+  CONTRIBUTORS="Mathias Kaufmann <me@stei.gr>, Cloudesire <cloduesire-dev@eng.it>, Monogramm <opensource@monogramm.io>"
 
-ENV REFRESHED_AT="2019-10-10" \
-  POWERDNS_VERSION=4.2.0 \
-  AUTOCONF=mysql \
-  MYSQL_HOST="mysql" \
-  MYSQL_PORT="3306" \
-  MYSQL_USER="root" \
-  MYSQL_PASS="root" \
-  MYSQL_DB="pdns" \
-  PGSQL_HOST="pgsql" \
-  PGSQL_PORT="5432" \
-  PGSQL_USER="postgres" \
-  PGSQL_PASS="postgres" \
-  PGSQL_DB="pdns" \
-  SQLITE_DB="pdns.sqlite3"
+ENV REFRESHED_AT="2020-05-24" \
+    POWERDNS_VERSION=4.3.0 \
+    AUTOCONF=mysql \
+    MYSQL_HOST="mysql" \
+    MYSQL_PORT="3306" \
+    MYSQL_USER="root" \
+    MYSQL_PASS="root" \
+    MYSQL_DB="pdns" \
+    PGSQL_HOST="pgsql" \
+    PGSQL_PORT="5432" \
+    PGSQL_USER="postgres" \
+    PGSQL_PASS="postgres" \
+    PGSQL_DB="pdns" \
+    SQLITE_DB="pdns.sqlite3"
 
 RUN set -ex; \
   apk --update --no-cache add \
+    curl-dev \
     libpq \
     libstdc++ \
     libgcc \
+    lua-dev \
     mariadb-connector-c \
     mariadb-client \
     postgresql-client \
@@ -49,7 +51,6 @@ RUN set -ex; \
     --sysconfdir=/etc/pdns \
     --with-modules="" \
     --with-dynmodules="bind gmysql gpgsql gsqlite3" \
-    --without-lua \
   ; \
   make; \
   make install-strip; \
@@ -59,7 +60,7 @@ RUN set -ex; \
   adduser -S -D -H -h /var/empty -s /bin/false -G pdns -g pdns pdns 2>/dev/null; \
   cp /usr/lib/libboost_program_options-mt.so* /tmp; \
   apk del --purge .build-deps; \
-  mv /tmp/libboost_program_options-mt.so* /usr/lib/; \
+  mv /tmp/lib* /usr/lib/; \
   rm -rf /tmp/pdns-$POWERDNS_VERSION /var/cache/apk/*
 
 ADD sql/* pdns.conf /etc/pdns/
