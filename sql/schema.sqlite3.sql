@@ -21,7 +21,6 @@ CREATE TABLE records (
   content               VARCHAR(65535) DEFAULT NULL,
   ttl                   INTEGER DEFAULT NULL,
   prio                  INTEGER DEFAULT NULL,
-  change_date           INTEGER DEFAULT NULL,
   disabled              BOOLEAN DEFAULT 0,
   ordername             VARCHAR(255),
   auth                  BOOL DEFAULT 1,
@@ -75,6 +74,7 @@ CREATE TABLE cryptokeys (
  domain_id              INT NOT NULL,
  flags                  INT NOT NULL,
  active                 BOOL,
+ published              BOOL DEFAULT 1,
  content                TEXT,
  FOREIGN KEY(domain_id) REFERENCES domains(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
