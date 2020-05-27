@@ -57,7 +57,7 @@ docker_setup_env
 [[ -z "$TRACE" ]] || set -x
 
 # --help, --version
-[ "$1" = "--help" ] || [ "$1" = "--version" ] && exec pdns_server $1
+[ "$1" = "--help" ] || [ "$1" = "--version" ] && exec pdns_server "$1"
 # treat everything except -- as exec cmd
 [ "${1:0:2}" != "--" ] && exec "$@"
 
@@ -187,7 +187,7 @@ case "$PDNS_LAUNCH" in
   ;;
   gsqlite3)
     if [[ ! -f "$PDNS_GSQLITE3_DATABASE" ]]; then
-      install -D -d -o pdns -g pdns -m 0755 $(dirname $PDNS_GSQLITE3_DATABASE)
+      install -D -d -o pdns -g pdns -m 0755 $(dirname "$PDNS_GSQLITE3_DATABASE")
       log 'Initializing SQLite Database'
       sqlite3 "$PDNS_GSQLITE3_DATABASE" < /etc/pdns/schema.sqlite3.sql
       chown pdns:pdns "$PDNS_GSQLITE3_DATABASE"
@@ -204,13 +204,13 @@ case "$PDNS_LAUNCH" in
 esac
 
 log 'Split modules to load dynamically...'
-PDNS_LOAD_MODULES="$(echo $PDNS_LOAD_MODULES | sed 's/^,//')"
+PDNS_LOAD_MODULES=$(echo "$PDNS_LOAD_MODULES" | sed 's/^,//')
 
 log 'Convert all environment variables prefixed with PDNS_ into pdns config directives...'
 printenv | grep ^PDNS_ | cut -f2- -d_ | while read var; do
   val="${var#*=}"
   var="${var%%=*}"
-  var="$(echo $var | sed -e 's/_/-/g' | tr '[:upper:]' '[:lower:]')"
+  var=$(echo "$var" | sed -e 's/_/-/g' | tr '[:upper:]' '[:lower:]')
   [[ -z "$TRACE" ]] || echo "$var=$val"
   sed -r -i "s#^[# ]*$var=.*#$var=$val#g" /etc/pdns/pdns.conf
 done
