@@ -126,6 +126,7 @@ $ docker run --name pdns \
     -   `MYSQL_PASS=root`
     -   `MYSQL_DB=pdns`
     -   `MYSQL_DNSSEC=no`
+
 -   Postgres connection settings
     -   `AUTOCONF=postgres`
     -   `PGSQL_HOST=postgresql`
@@ -134,14 +135,20 @@ $ docker run --name pdns \
     -   `PGSQL_PASS=pdnspassword`
     -   `PGSQL_DB=pdns`
     -   `PGSQL_DNSSEC=no`
+
 -   SQLite connection settings
     -   `AUTOCONF=sqlite`
     -   `SQLITE_DB=/pdns.sqlite3`
     -   `SQLITE_DNSSEC=no`
+
 -   Want to disable mysql initialization? Use `AUTOCONF=false`
+
 -   Want to apply 12Factor-Pattern? Apply environment variables of the form `PDNS_$pdns-config-variable=$config-value`, like `PDNS_WEBSERVER=yes`
+
 -   To support docker secrets, use same variables as above with suffix `_FILE`.
+
 -   DNSSEC is disabled by default, to enable use `MYSQL_DNSSEC=yes` or `PGSQL_DNSSEC=yes` or `SQLITE_DNSSEC=yes`
+
 -   Want to use own config files? Mount a Volume to `/etc/pdns/conf.d` or simply overwrite `/etc/pdns/pdns.conf`
 
 ### PowerDNS Configuration
