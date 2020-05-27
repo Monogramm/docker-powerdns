@@ -45,6 +45,7 @@ ENV REFRESHED_AT="2020-05-24" \
 
 RUN set -ex; \
   apk --update --no-cache add \
+    bash \
     curl-dev \
     libpq \
     libstdc++ \
@@ -90,6 +91,9 @@ RUN set -ex; \
 
 COPY sql/* pdns.conf /etc/pdns/
 COPY entrypoint.sh /
+
+RUN set -ex; \
+  chmod +x /entrypoint.sh
 
 EXPOSE 53/tcp 53/udp
 

@@ -151,9 +151,9 @@ case "$PDNS_LAUNCH" in
     fi
   ;;
   gpgsql)
-    #if [[ -z "$(echo "SELECT 1 FROM pg_database WHERE datname = '$PGSQL_DB'" | $PGSQLCMD -t)" ]]; then
-    #  echo "CREATE DATABASE $PGSQL_DB;" | $PGSQLCMD
-    #fi
+    if [[ -z "$(echo "SELECT 1 FROM pg_database WHERE datname = '$PGSQL_DB'" | $PGSQLCMD -t)" ]]; then
+      echo "CREATE DATABASE $PGSQL_DB;" | $PGSQLCMD
+    fi
     PGSQLCMD="$PGSQLCMD -p ${PGSQL_PORT} -d ${PGSQL_DB} -w "
     if ! PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -t -c "\d" | grep -qw "domains"; then
       log 'Initializing Postgres Database'
