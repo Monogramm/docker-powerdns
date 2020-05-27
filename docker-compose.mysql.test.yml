@@ -9,7 +9,7 @@ services:
     command: sh /docker_test.sh
     depends_on:
       - pdns-server
-      - pdns-postgresql
+      - pdns-mysql
     environment:
       # Tests setup
       - PING_CONTAINER=pdns-server
@@ -21,7 +21,7 @@ services:
 
   pdns-server:
     build: .
-    image: docker-powerdns
+    image: ${IMAGE_NAME}
     hostname: ${PDNS_HOST}
     container_name: ${PDNS_HOST}
     ports:
@@ -33,14 +33,14 @@ services:
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
     environment:
-      - AUTOCONF=postgres
-      # PostgreSQL
-      - PGSQL_HOST=${PDNS_DB_HOST}
-      - PGSQL_PORT=5432
-      - PGSQL_DB=${PDNS_DB_NAME}
-      - PGSQL_USER=${PDNS_DB_USER}
-      - PGSQL_PASS=${PDNS_DB_PASSWORD}
-      - PGSQL_DNSSEC=no
+      - AUTOCONF=mysql
+      # MySQL / MariaDB
+      - MYSQL_HOST=${PDNS_DB_HOST}
+      - MYSQL_PORT=3306
+      - MYSQL_DB=${PDNS_DB_NAME}
+      - MYSQL_USER=${PDNS_DB_USER}
+      - MYSQL_PASS=${PDNS_DB_PASSWORD}
+      - MYSQL_DNSSEC=no
       - PDNS_API=yes
       - PDNS_API_KEY=${PDNS_API_KEY}
       - PDNS_WEBSERVER_ADDRESS=0.0.0.0
@@ -48,26 +48,36 @@ services:
       - PDNS_WEBSERVER_ALLOW_FROM=${PDNS_WEBSERVER_ALLOW_FROM}/0
       - PDNS_SOA_REFRESH_DEFAULT=14400
     depends_on:
-      - pdns-postgresql
+      pdns-mysql:
+        condition: service_healthy
 
-  pdns-postgresql:
-    image: postgres:10-alpine
+  pdns-mysql:
+    image: mariadb:10.3
     hostname: ${PDNS_DB_HOST}
     container_name: ${PDNS_DB_HOST}
-    restart: always
-    environment:
-      - POSTGRES_DB=${PDNS_DB_NAME}
-      - POSTGRES_USER=${PDNS_DB_USER}
-      - POSTGRES_PASSWORD=${PDNS_DB_PASSWORD}
-    healthcheck:
-      test: ["CMD", "pg_isready", "-U", "${PDNS_DB_USER}"]
+    mem_limit: 256M
+    memswap_limit: 256M
+    expose:
+      - 3306
     volumes:
-      - powerdns-postgresql-data:/var/lib/postgresql/data
+      - powerdns-mysql-data:/var/lib/mysql
       - /etc/localtime:/etc/localtime:ro
       - /etc/timezone:/etc/timezone:ro
+    networks:
+      - default
+    command: --character_set_client=utf8 --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --character-set-client-handshake=FALSE
+    environment:
+      - MYSQL_DATABASE=${PDNS_DB_NAME}
+      - MYSQL_USER=${PDNS_DB_USER}
+      - MYSQL_PASSWORD=${PDNS_DB_PASSWORD}
+      - MYSQL_RANDOM_ROOT_PASSWORD=1
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 5
 
 networks:
   default:
 
 volumes:
-  powerdns-postgresql-data:
+  powerdns-mysql-data:
