@@ -1,6 +1,7 @@
 # PowerDNS Docker Container
 
-[![Build Status](https://travis-ci.org/psitrax/powerdns.svg)](https://travis-ci.org/psitrax/powerdns)
+[![Build Status](https://travis-ci.org/Monogramm/docker-powerdns.svg)](https://travis-ci.org/Monogramm/docker-powerdns)
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/d1780c9b17c2492ab909e058d06ef4bb)](https://www.codacy.com/gh/Monogramm/docker-powerdns?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Monogramm/docker-powerdns&amp;utm_campaign=Badge_Grade)
 [![Image Size](https://images.microbadger.com/badges/image/psitrax/powerdns.svg)](https://microbadger.com/images/psitrax/powerdns)
 [![Docker Stars](https://img.shields.io/docker/stars/psitrax/powerdns.svg)](https://hub.docker.com/r/psitrax/powerdns/)
 [![Docker Pulls](https://img.shields.io/docker/pulls/psitrax/powerdns.svg)](https://hub.docker.com/r/psitrax/powerdns/)
