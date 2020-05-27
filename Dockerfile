@@ -20,6 +20,7 @@ ENV REFRESHED_AT="2020-05-24" \
 
 RUN set -ex; \
   apk --update --no-cache add \
+    bash \
     curl-dev \
     libpq \
     libstdc++ \
