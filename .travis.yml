@@ -1,26 +1,33 @@
-dist: trusty
-sudo: required
+os: linux
+dist: bionic
 
 services: docker
 
-language: bash
+language: shell
 
 branches:
   only:
     - master
     - develop
 
-before_script:
+before_install:
   - env | sort
   - name="pdns-server"
   - image="docker-powerdns"
-  - dir="."
+  - home=$(pwd)
+  - travis_dir="${home}/"
+
+install:
+  - cd "$travis_dir"
+  # Docker build
+  - travis_retry docker build -t "$image" "$dir"
+
+before_script:
+  - docker images
 
 script:
-  - cd "$dir"
-  # Docker tests
-  - travis_retry docker build -t "$image" "$dir"
-  - docker images
+  - cd "$travis_dir"
+  # Docker run
   - docker run --rm --name "cmd_help" -e AUTOCONF=$AUTOCONF "$image" --help
   #- docker run --rm --name "cmd_version" -e AUTOCONF=$AUTOCONF "$image" --version
   - docker run --name "$name" -e AUTOCONF=$AUTOCONF -d "$image"
