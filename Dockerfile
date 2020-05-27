@@ -88,8 +88,8 @@ RUN set -ex; \
   mv /tmp/lib* /usr/lib/; \
   rm -rf /tmp/pdns-$POWERDNS_VERSION /var/cache/apk/*
 
-ADD sql/* pdns.conf /etc/pdns/
-ADD entrypoint.sh /
+COPY sql/* pdns.conf /etc/pdns/
+COPY entrypoint.sh /
 
 EXPOSE 53/tcp 53/udp
 
