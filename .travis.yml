@@ -12,14 +12,17 @@ branches:
 
 before_install:
   - env | sort
-  - name="pdns-server"
-  - image="docker-powerdns"
-  - home=$(pwd)
-  - travis_dir="${home}/"
+  - export TAG=travis
+  - export VCS_REF=`git rev-parse --short HEAD`
+  - export BUILD_DATE=`date -u +"%Y-%m-%dT%H:%M:%SZ"`
+  - export name="pdns-server"
+  - export image="docker-powerdns"
+  - export home=$(pwd)
+  - export travis_dir="${home}/"
 
 install:
   - cd "$travis_dir"
-  # Docker build
+  # Test container build
   - travis_retry docker build -t "$image" "$dir"
 
 before_script:
@@ -27,7 +30,7 @@ before_script:
 
 script:
   - cd "$travis_dir"
-  # Docker run
+  # Test container run
   - docker run --rm --name "cmd_help" -e AUTOCONF=$AUTOCONF "$image" --help
   #- docker run --rm --name "cmd_version" -e AUTOCONF=$AUTOCONF "$image" --version
   - docker run --name "$name" -e AUTOCONF=$AUTOCONF -d "$image"
