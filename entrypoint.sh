@@ -139,13 +139,13 @@ case "$PDNS_LAUNCH" in
     MYSQLCMD="$MYSQLCMD $MYSQL_DB"
     if [ "$(echo "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = \"$MYSQL_DB\";" | $MYSQLCMD)" -le 1 ]; then
       log 'Initializing MySQL Database'
-      cat /etc/pdns/schema.mysql.sql | $MYSQLCMD
+      $MYSQLCMD < /etc/pdns/schema.mysql.sql
 
       # Run custom mysql post-init sql scripts
       if [ -d "/etc/pdns/mysql-postinit" ]; then
         for SQLFILE in $(ls -1 /etc/pdns/mysql-postinit/*.sql | sort) ; do
           echo Source $SQLFILE
-          cat $SQLFILE | $MYSQLCMD
+          $MYSQLCMD < $SQLFILE
         done
       fi
     fi
