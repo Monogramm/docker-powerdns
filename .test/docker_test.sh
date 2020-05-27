@@ -9,7 +9,7 @@ echo "Waiting to ensure everything is fully ready for the tests..."
 sleep 60
 
 echo "Checking main containers are reachable..."
-if ! sudo ping -c 10 -q "${PING_CONTAINER}" ; then
+if ! ping -c 10 -q "${PING_CONTAINER}" ; then
     echo 'Main container is not responding!'
     exit 1
 fi
