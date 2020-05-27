@@ -18,7 +18,7 @@ fi
 ################################################################################
 # Testing PowerDNS
 
-# TODO Check PowerDNS is up from this container
+# TODO Check PowerDNS is up from this container, maybe using its Web API
 
 ################################################################################
 # Success

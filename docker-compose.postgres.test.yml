@@ -41,6 +41,7 @@ services:
       - PGSQL_USER=${PDNS_DB_USER}
       - PGSQL_PASS=${PDNS_DB_PASSWORD}
       - PGSQL_DNSSEC=no
+      # PDNS Config
       - PDNS_API=yes
       - PDNS_API_KEY=${PDNS_API_KEY}
       - PDNS_WEBSERVER_ADDRESS=0.0.0.0
