@@ -111,7 +111,7 @@ isDBup () {
       echo $?
     ;;
     gpgsql)
-      pg_isready -d postgres://${PGSQL_HOST}:${PGSQL_PORT}/${PGSQL_DB} 1>/dev/null
+      pg_isready -d "postgres://${PGSQL_HOST}:${PGSQL_PORT}/${PGSQL_DB}" 1>/dev/null
       echo $?
       # Alternative way to check DB is up
       #PGSQLCMD="$PGSQLCMD -p ${PGSQL_PORT} -d ${PGSQL_DB} -w "
@@ -128,12 +128,12 @@ isDBup () {
 }
 
 RETRY=10
-until [ $(isDBup) -eq 0 ] || [ $RETRY -le 0 ] ; do
+until [ $(isDBup) -eq 0 ] || [ "$RETRY" -le 0 ] ; do
   log "Waiting for database to come up"
   sleep 5
   RETRY=$((RETRY-1))
 done
-if [ $RETRY -le 0 ]; then
+if [ "$RETRY" -le 0 ]; then
   if [[ "$MYSQL_HOST" ]]; then
     >&2 echo "Error: Could not connect to Database on $MYSQL_HOST:$MYSQL_PORT"
     exit 1
