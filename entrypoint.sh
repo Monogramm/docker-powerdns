@@ -15,7 +15,7 @@ file_env() {
     local fileVar="${var}_FILE"
     local def="${2:-}"
     if [ "${!var:-}" ] && [ "${!fileVar:-}" ]; then
-        echo "Both $var and $fileVar are set (but are exclusive)"
+        log "Both $var and $fileVar are set (but are exclusive)"
         exit 1
     fi
     local val="$def"
@@ -32,24 +32,24 @@ file_env() {
 docker_setup_env() {
     # Initialize values that might be stored in a file
 
-    file_env 'AUTOCONF' $DEFAULT_AUTOCONF
+    file_env 'AUTOCONF' "$DEFAULT_AUTOCONF"
 
-    file_env 'MYSQL_HOST' $MYSQL_DEFAULT_HOST
+    file_env 'MYSQL_HOST' "$MYSQL_DEFAULT_HOST"
     file_env 'MYSQL_DNSSEC' 'no'
-    file_env 'MYSQL_DB' $MYSQL_DEFAULT_DB
-    file_env 'MYSQL_PASS' $MYSQL_DEFAULT_PASS
-    file_env 'MYSQL_USER' $MYSQL_DEFAULT_USER
-    file_env 'MYSQL_PORT' $MYSQL_DEFAULT_PORT
+    file_env 'MYSQL_DB' "$MYSQL_DEFAULT_DB"
+    file_env 'MYSQL_PASS' "$MYSQL_DEFAULT_PASS"
+    file_env 'MYSQL_USER' "$MYSQL_DEFAULT_USER"
+    file_env 'MYSQL_PORT' "$MYSQL_DEFAULT_PORT"
 
-    file_env 'PGSQL_HOST' $PGSQL_DEFAULT_HOST
+    file_env 'PGSQL_HOST' "$PGSQL_DEFAULT_HOST"
     file_env 'PGSQL_DNSSEC' 'no'
-    file_env 'PGSQL_DB' $PGSQL_DEFAULT_DB
-    file_env 'PGSQL_PASS' $PGSQL_DEFAULT_PASS
-    file_env 'PGSQL_USER' $PGSQL_DEFAULT_USER
-    file_env 'PGSQL_PORT' $PGSQL_DEFAULT_PORT
+    file_env 'PGSQL_DB' "$PGSQL_DEFAULT_DB"
+    file_env 'PGSQL_PASS' "$PGSQL_DEFAULT_PASS"
+    file_env 'PGSQL_USER' "$PGSQL_DEFAULT_USER"
+    file_env 'PGSQL_PORT' "$PGSQL_DEFAULT_PORT"
 
     file_env 'SQLITE_DNSSEC' 'no'
-    file_env 'SQLITE_DB' $SQLITE_DEFAULT_DB
+    file_env 'SQLITE_DB' "$SQLITE_DEFAULT_DB"
 }
 
 docker_setup_env
@@ -131,14 +131,14 @@ RETRY=10
 until [ $(isDBup) -eq 0 ] || [ $RETRY -le 0 ] ; do
   log "Waiting for database to come up"
   sleep 5
-  RETRY=$(expr $RETRY - 1)
+  RETRY=$((RETRY-1))
 done
 if [ $RETRY -le 0 ]; then
   if [[ "$MYSQL_HOST" ]]; then
-    >&2 echo Error: Could not connect to Database on $MYSQL_HOST:$MYSQL_PORT
+    >&2 echo "Error: Could not connect to Database on $MYSQL_HOST:$MYSQL_PORT"
     exit 1
   elif [[ "$PGSQL_HOST" ]]; then
-    >&2 echo Error: Could not connect to Database on $PGSQL_HOST:$PGSQL_PORT
+    >&2 echo "Error: Could not connect to Database on $PGSQL_HOST:$PGSQL_PORT"
     exit 1
   fi
 fi
@@ -155,8 +155,8 @@ case "$PDNS_LAUNCH" in
       # Run custom mysql post-init sql scripts
       if [ -d "/etc/pdns/mysql-postinit" ]; then
         for SQLFILE in $(ls -1 /etc/pdns/mysql-postinit/*.sql | sort) ; do
-          echo Source $SQLFILE
-          $MYSQLCMD < $SQLFILE
+          echo "Source $SQLFILE"
+          $MYSQLCMD < "$SQLFILE"
         done
       fi
     fi
@@ -173,8 +173,8 @@ case "$PDNS_LAUNCH" in
       # Run custom pgsql post-init sql scripts
       if [ -d "/etc/pdns/pgsql-postinit" ]; then
         for SQLFILE in $(ls -1 /etc/pdns/pgsql-postinit/*.sql | sort) ; do
-          echo Source $SQLFILE
-          PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f $SQLFILE
+          echo "Source $SQLFILE"
+          PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f "$SQLFILE"
         done
       fi
     fi
@@ -189,14 +189,14 @@ case "$PDNS_LAUNCH" in
     if [[ ! -f "$PDNS_GSQLITE3_DATABASE" ]]; then
       install -D -d -o pdns -g pdns -m 0755 $(dirname $PDNS_GSQLITE3_DATABASE)
       log 'Initializing SQLite Database'
-      sqlite3 $PDNS_GSQLITE3_DATABASE < /etc/pdns/schema.sqlite3.sql
-      chown pdns:pdns $PDNS_GSQLITE3_DATABASE
+      sqlite3 "$PDNS_GSQLITE3_DATABASE" < /etc/pdns/schema.sqlite3.sql
+      chown pdns:pdns "$PDNS_GSQLITE3_DATABASE"
 
       # Run custom pgsql post-init sql scripts
       if [ -d "/etc/pdns/sqlite3-postinit" ]; then
         for SQLFILE in $(ls -1 /etc/pdns/sqlite3-postinit/*.sql | sort) ; do
-          echo Source $SQLFILE
-          sqlite3 $PDNS_GSQLITE3_DATABASE < $SQLFILE
+          echo "Source $SQLFILE"
+          sqlite3 "$PDNS_GSQLITE3_DATABASE" < "$SQLFILE"
         done
       fi
     fi
@@ -216,7 +216,7 @@ printenv | grep ^PDNS_ | cut -f2- -d_ | while read var; do
 done
 
 log 'Environment cleanup...'
-for var in $(printenv | cut -f1 -d= | grep -v -e HOME -e USER -e PATH ); do unset $var; done
+for var in $(printenv | cut -f1 -d= | grep -v -e HOME -e USER -e PATH ); do unset "$var"; done
 export TZ=UTC LANG=C LC_ALL=C
 
 log 'Prepare graceful shutdown...'
