@@ -32,13 +32,24 @@ file_env() {
 docker_setup_env() {
     # Initialize values that might be stored in a file
 
-    file_env 'MYSQL_AUTOCONF' $MYSQL_DEFAULT_AUTOCONF
+    file_env 'AUTOCONF' $DEFAULT_AUTOCONF
+
     file_env 'MYSQL_HOST' $MYSQL_DEFAULT_HOST
     file_env 'MYSQL_DNSSEC' 'no'
     file_env 'MYSQL_DB' $MYSQL_DEFAULT_DB
     file_env 'MYSQL_PASS' $MYSQL_DEFAULT_PASS
     file_env 'MYSQL_USER' $MYSQL_DEFAULT_USER
     file_env 'MYSQL_PORT' $MYSQL_DEFAULT_PORT
+
+    file_env 'PGSQL_HOST' $PGSQL_DEFAULT_HOST
+    file_env 'PGSQL_DNSSEC' 'no'
+    file_env 'PGSQL_DB' $PGSQL_DEFAULT_DB
+    file_env 'PGSQL_PASS' $PGSQL_DEFAULT_PASS
+    file_env 'PGSQL_USER' $PGSQL_DEFAULT_USER
+    file_env 'PGSQL_PORT' $PGSQL_DEFAULT_PORT
+
+    file_env 'SQLITE_DNSSEC' 'no'
+    file_env 'SQLITE_DB' $SQLITE_DEFAULT_DB
 }
 
 docker_setup_env

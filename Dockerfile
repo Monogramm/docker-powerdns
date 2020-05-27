@@ -30,18 +30,18 @@ LABEL maintainer="Christoph Wiechert <wio@psitrax.de>" \
       org.opencontainers.image.authors="Christoph Wiechert <wio@psitrax.de>"
 
 ENV REFRESHED_AT="2020-05-24" \
-    AUTOCONF=mysql \
-    MYSQL_HOST="mysql" \
-    MYSQL_PORT="3306" \
-    MYSQL_USER="root" \
-    MYSQL_PASS="root" \
-    MYSQL_DB="pdns" \
-    PGSQL_HOST="pgsql" \
-    PGSQL_PORT="5432" \
-    PGSQL_USER="postgres" \
-    PGSQL_PASS="postgres" \
-    PGSQL_DB="pdns" \
-    SQLITE_DB="pdns.sqlite3"
+    DEFAULT_AUTOCONF=mysql \
+    MYSQL_DEFAULT_HOST="mysql" \
+    MYSQL_DEFAULT_PORT="3306" \
+    MYSQL_DEFAULT_USER="root" \
+    MYSQL_DEFAULT_PASS="root" \
+    MYSQL_DEFAULT_DB="pdns" \
+    PGSQL_DEFAULT_HOST="pgsql" \
+    PGSQL_DEFAULT_PORT="5432" \
+    PGSQL_DEFAULT_USER="postgres" \
+    PGSQL_DEFAULT_PASS="postgres" \
+    PGSQL_DEFAULT_DB="pdns" \
+    SQLITE_DEFAULT_DB="pdns.sqlite3"
 
 RUN set -ex; \
   apk --update --no-cache add \
