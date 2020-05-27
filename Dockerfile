@@ -66,6 +66,9 @@ RUN set -ex; \
 ADD sql/* pdns.conf /etc/pdns/
 ADD entrypoint.sh /
 
+RUN set -ex; \
+  chmod +x /entrypoint.sh
+
 EXPOSE 53/tcp 53/udp
 
 ENTRYPOINT ["/entrypoint.sh"]
