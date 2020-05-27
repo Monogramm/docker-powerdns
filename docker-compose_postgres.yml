@@ -41,6 +41,8 @@ services:
       - POSTGRES_DB=${PDNS_DB_NAME}
       - POSTGRES_USER=${PDNS_DB_USER}
       - POSTGRES_PASSWORD=${PDNS_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "${PDNS_DB_USER}"]
     volumes:
       - powerdns-postgresql-data:/var/lib/postgresql/data
       - /etc/localtime:/etc/localtime:ro
