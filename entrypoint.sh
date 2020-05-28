@@ -167,7 +167,7 @@ case "$PDNS_LAUNCH" in
 
       if [ -f "/etc/pdns/${DB_VERSION}_to_${POWERDNS_VERSION}_schema.mysql.sql" ]; then
         echo "Updating MySQL Database from ${DB_VERSION} to ${POWERDNS_VERSION}"
-        cat "/etc/pdns/${DB_VERSION}_to_${POWERDNS_VERSION}_schema.mysql.sql" | $MYSQLCMD
+        $MYSQLCMD < "/etc/pdns/${DB_VERSION}_to_${POWERDNS_VERSION}_schema.mysql.sql"
 
         echo "Updating MySQL Database version"
         echo "${POWERDNS_VERSION}" > /etc/pdns/.docker/db-version.txt
