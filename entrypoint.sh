@@ -152,13 +152,13 @@ case "$PDNS_LAUNCH" in
       log 'Initializing MySQL Database'
       $MYSQLCMD < /etc/pdns/schema.mysql.sql
 
-      echo "Storing MySQL Database version"
+      log "Storing MySQL Database version (${POWERDNS_VERSION})"
       echo "${POWERDNS_VERSION}" > /etc/pdns/.docker/db-version.txt
 
       # Run custom mysql post-init sql scripts
       if [ -d "/etc/pdns/mysql-postinit" ]; then
         for SQLFILE in $(ls -1 /etc/pdns/mysql-postinit/*.sql | sort) ; do
-          echo "Source $SQLFILE"
+          log "Source $SQLFILE"
           $MYSQLCMD < "$SQLFILE"
         done
       fi
@@ -166,10 +166,10 @@ case "$PDNS_LAUNCH" in
       DB_VERSION=$(cat '/etc/pdns/.docker/db-version.txt')
 
       if [ -f "/etc/pdns/${DB_VERSION}_to_${POWERDNS_VERSION}_schema.mysql.sql" ]; then
-        echo "Updating MySQL Database from ${DB_VERSION} to ${POWERDNS_VERSION}"
+        log "Updating MySQL Database from ${DB_VERSION} to ${POWERDNS_VERSION}"
         $MYSQLCMD < "/etc/pdns/${DB_VERSION}_to_${POWERDNS_VERSION}_schema.mysql.sql"
 
-        echo "Updating MySQL Database version"
+        log "Updating MySQL Database version (${POWERDNS_VERSION})"
         echo "${POWERDNS_VERSION}" > /etc/pdns/.docker/db-version.txt
       fi
     fi
@@ -183,13 +183,13 @@ case "$PDNS_LAUNCH" in
       log 'Initializing Postgres Database'
       PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f /etc/pdns/schema.pgsql.sql
 
-      echo "Storing Postgres Database version"
+      log "Storing Postgres Database version (${POWERDNS_VERSION})"
       echo "${POWERDNS_VERSION}" > /etc/pdns/.docker/db-version.txt
 
       # Run custom pgsql post-init sql scripts
       if [ -d "/etc/pdns/pgsql-postinit" ]; then
         for SQLFILE in $(ls -1 /etc/pdns/pgsql-postinit/*.sql | sort) ; do
-          echo "Source $SQLFILE"
+          log "Source $SQLFILE"
           PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f "$SQLFILE"
         done
       fi
@@ -197,10 +197,10 @@ case "$PDNS_LAUNCH" in
       DB_VERSION=$(cat '/etc/pdns/.docker/db-version.txt')
 
       if [ -f "/etc/pdns/${DB_VERSION}_to_${POWERDNS_VERSION}_schema.mysql.sql" ]; then
-        echo "Updating Postgres Database from ${DB_VERSION} to ${POWERDNS_VERSION}"
+        log "Updating Postgres Database from ${DB_VERSION} to ${POWERDNS_VERSION}"
         PGPASSWORD=${PGSQL_PASS} $PGSQLCMD -f "/etc/pdns/${DB_VERSION}_to_${POWERDNS_VERSION}_schema.mysql.sql"
 
-        echo "Updating Postgres Database version"
+        log "Updating Postgres Database version (${POWERDNS_VERSION})"
         echo "${POWERDNS_VERSION}" > /etc/pdns/.docker/db-version.txt
       fi
     fi
@@ -218,13 +218,13 @@ case "$PDNS_LAUNCH" in
       sqlite3 "$PDNS_GSQLITE3_DATABASE" < /etc/pdns/schema.sqlite3.sql
       chown pdns:pdns "$PDNS_GSQLITE3_DATABASE"
 
-      echo "Storing SQLite Database version"
+      log "Storing SQLite Database version (${POWERDNS_VERSION})"
       echo "${POWERDNS_VERSION}" > /etc/pdns/.docker/db-version.txt
 
       # Run custom pgsql post-init sql scripts
       if [ -d "/etc/pdns/sqlite3-postinit" ]; then
         for SQLFILE in $(ls -1 /etc/pdns/sqlite3-postinit/*.sql | sort) ; do
-          echo "Source $SQLFILE"
+          log "Source $SQLFILE"
           sqlite3 "$PDNS_GSQLITE3_DATABASE" < "$SQLFILE"
         done
       fi
@@ -232,10 +232,10 @@ case "$PDNS_LAUNCH" in
       DB_VERSION=$(cat '/etc/pdns/.docker/db-version.txt')
 
       if [ -f "/etc/pdns/${DB_VERSION}_to_${POWERDNS_VERSION}_schema.mysql.sql" ]; then
-        echo "Updating SQLite Database from ${DB_VERSION} to ${POWERDNS_VERSION}"
+        log "Updating SQLite Database from ${DB_VERSION} to ${POWERDNS_VERSION}"
         sqlite3 "$PDNS_GSQLITE3_DATABASE" < "/etc/pdns/${DB_VERSION}_to_${POWERDNS_VERSION}_schema.mysql.sql"
 
-        echo "Updating SQLite Database version"
+        log "Updating SQLite Database version (${POWERDNS_VERSION})"
         echo "${POWERDNS_VERSION}" > /etc/pdns/.docker/db-version.txt
       fi
     fi
