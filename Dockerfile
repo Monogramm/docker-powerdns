@@ -53,6 +53,7 @@ RUN set -ex; \
   make; \
   make install-strip; \
   cd /; \
+  cp ./modules/gmysqlbackend/*schema.mysql.sql /etc/pdns/; \
   mkdir -p /etc/pdns/conf.d; \
   addgroup -S pdns 2>/dev/null; \
   adduser -S -D -H -h /var/empty -s /bin/false -G pdns -g pdns pdns 2>/dev/null; \
@@ -61,13 +62,15 @@ RUN set -ex; \
   mv /tmp/lib* /usr/lib/; \
   rm -rf /tmp/pdns-$POWERDNS_VERSION /var/cache/apk/*
 
-COPY sql/* pdns.conf /etc/pdns/
+COPY pdns.conf /etc/pdns/
 COPY entrypoint.sh /
 
 RUN set -ex; \
   chmod +x /entrypoint.sh
 
 EXPOSE 53/tcp 53/udp
+
+VOLUME [ "/etc/pdns/.docker" ]
 
 ENTRYPOINT ["/entrypoint.sh"]
 
