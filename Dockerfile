@@ -43,6 +43,7 @@ RUN set -ex; \
   ; \
   curl -sSL https://downloads.powerdns.com/releases/pdns-$POWERDNS_VERSION.tar.bz2 | tar xj -C /tmp; \
   cd /tmp/pdns-$POWERDNS_VERSION; \
+  mkdir -p /etc/pdns/; \
   cp ./modules/gmysqlbackend/*schema.mysql.sql /etc/pdns/; \
   cp ./modules/gpgsqlbackend/*schema.pgsql.sql /etc/pdns/; \
   cp ./modules/gsqlite3backend/*schema.sqlite3.sql /etc/pdns/; \
