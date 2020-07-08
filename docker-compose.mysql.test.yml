@@ -1,4 +1,4 @@
-version: "2.1"
+version: "2.2"
 
 services:
   # https://docs.docker.com/docker-hub/builds/automated-testing/
@@ -26,6 +26,8 @@ services:
     image: ${IMAGE_NAME}
     hostname: ${PDNS_HOST}
     container_name: pdns-server-mysql
+    healthcheck:
+      test: ["CMD", "wget","--output-document=-","--quiet","--tries=1","--header","X-API-Key: ${PDNS_API_KEY}","http://127.0.0.1:8081/api"]
     # If ports need to be redirected or exposed to host
     #ports:
     #  - "5053:53"
@@ -63,6 +65,10 @@ services:
     container_name: pdns-mysql
     mem_limit: 256M
     memswap_limit: 256M
+    healthcheck:
+      test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+      timeout: 10s
+      retries: 5
     expose:
       - 3306
     networks:
