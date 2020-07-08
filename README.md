@@ -2,10 +2,10 @@
 
 [![Build Status](https://travis-ci.org/Monogramm/docker-powerdns.svg)](https://travis-ci.org/Monogramm/docker-powerdns)
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/d1780c9b17c2492ab909e058d06ef4bb)](https://www.codacy.com/gh/Monogramm/docker-powerdns?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Monogramm/docker-powerdns&amp;utm_campaign=Badge_Grade)
-[![Image Size](https://images.microbadger.com/badges/image/psitrax/powerdns.svg)](https://microbadger.com/images/psitrax/powerdns)
-[![Docker Stars](https://img.shields.io/docker/stars/psitrax/powerdns.svg)](https://hub.docker.com/r/psitrax/powerdns/)
-[![Docker Pulls](https://img.shields.io/docker/pulls/psitrax/powerdns.svg)](https://hub.docker.com/r/psitrax/powerdns/)
-[![Docker Automated buil](https://img.shields.io/docker/automated/psitrax/powerdns.svg)](https://hub.docker.com/r/psitrax/powerdns/)
+[![Image Size](https://images.microbadger.com/badges/image/monogramm/docker-powerdns.svg)](https://microbadger.com/images/monogramm/docker-powerdns)
+[![Docker Stars](https://img.shields.io/docker/stars/monogramm/docker-powerdns.svg)](https://hub.docker.com/r/monogramm/docker-powerdns/)
+[![Docker Pulls](https://img.shields.io/docker/pulls/monogramm/docker-powerdns.svg)](https://hub.docker.com/r/monogramm/docker-powerdns/)
+[![Docker Automated buil](https://img.shields.io/docker/automated/monogramm/docker-powerdns.svg)](https://hub.docker.com/r/monogramm/docker-powerdns/)
 
 -   Small Alpine based Image
 -   MySQL (default), Postgres, SQLite and Bind backend included
@@ -39,7 +39,7 @@ $ docker run --name pdns \
   -p 53:53/udp \
   -e MYSQL_USER=root \
   -e MYSQL_PASS=supersecret \
-  psitrax/powerdns \
+  monogramm/docker-powerdns \
     --cache-ttl=120 \
     --allow-axfr-ips=127.0.0.1,123.1.2.3
 ```
@@ -62,7 +62,7 @@ With docker-compose:
       - /srv/powerdns/db/data:/var/lib/mysql
 
   powerdns:
-    image: psitrax/powerdns
+    image: monogramm/docker-powerdns
     container_name: powerdns
     restart: always
     ports:
@@ -98,7 +98,7 @@ $ docker run --name pdns \
   -e AUTOCONF=postgres \
   -e PGSQL_USER=postgres \
   -e PGSQL_PASS=supersecret \
-  psitrax/powerdns \
+  monogramm/docker-powerdns \
     --cache-ttl=120 \
     --allow-axfr-ips=127.0.0.1,123.1.2.3
 ```
@@ -110,7 +110,7 @@ $ docker run --name pdns \
   -p 53:53 \
   -p 53:53/udp \
   -e AUTOCONF=sqlite \
-  psitrax/powerdns \
+  monogramm/docker-powerdns \
     --cache-ttl=120 \
     --allow-axfr-ips=127.0.0.1,123.1.2.3
 ```
@@ -154,7 +154,7 @@ $ docker run --name pdns \
 ### PowerDNS Configuration
 
 Append the PowerDNS setting to the command as shown in the example above.
-See `docker run --rm psitrax/powerdns --help`
+See `docker run --rm monogramm/docker-powerdns --help`
 
 ## License
 
